@@ -13,13 +13,13 @@ import org.json.JSONException;
 
 import vn.vmgmedia.infochanel.domain.InformationPlaylistChanelYoutobe;
 import vn.vmgmedia.infochanel.domain.InformationVideoYoutobe;
-import vn.vmgmedia.infochanel.untils.HandleHeaderRequest;
 import vn.vmgmedia.infochanel.untils.YoutobeConstant;
 
-public class MappingVideoWithPlayList {
+public class MappingVideoWithPlayList extends Thread {
+	private static String chanel = "";
 	
 	public static void main(String[] args) {
-		String linkChanel = "https://www.youtube.com/user/VEVO/playlists";
+		String linkChanel = "https://www.youtube.com/channel/UCUf7BpZJOP4YnfF2iVDt-_Q/playlists";
 		
 		GetPlaylistChanelYoutobe playlistChanelYoutobe = new GetPlaylistChanelYoutobe();
 		
@@ -29,11 +29,13 @@ public class MappingVideoWithPlayList {
 		
 		MappingVideoWithPlayList mappingVideoWithPlayList = new MappingVideoWithPlayList();
 		
+		chanel = playlistChanelYoutobe.chanel;
 		
 		mappingVideoWithPlayList.mappingVideoBaseOnPlaylist(listPlaylist);
 		
 		for (InformationPlaylistChanelYoutobe informationPlaylistChanelYoutobe : listPlaylist) {
-			System.out.println(informationPlaylistChanelYoutobe.namePlayList +"===="+ informationPlaylistChanelYoutobe.getLisVideoForPlayListChanel().size());
+			
+			System.out.println(informationPlaylistChanelYoutobe.namePlayList +"==Chanel: "+chanel+"==="+ informationPlaylistChanelYoutobe.getLisVideoForPlayListChanel().size());
 		}
 	}
 	
@@ -50,6 +52,8 @@ public class MappingVideoWithPlayList {
 		String pageContinue = YoutobeConstant.FIRST_PAGE;
 		
 		String cToken = null;
+		
+		playlist.lisVideoForPlayListChanel = new ArrayList<InformationVideoYoutobe>();
 		try {
 			do {
 
@@ -65,7 +69,7 @@ public class MappingVideoWithPlayList {
 				HttpsURLConnection getConnect = (HttpsURLConnection) url.openConnection();
 				getConnect.setRequestMethod("GET");
 				getConnect.setRequestProperty("x-youtube-client-name", "1");
-				getConnect.setRequestProperty("x-youtube-client-version", "2.20191002.00.00");
+				getConnect.setRequestProperty("x-youtube-client-version", "2.20191004.00.00");
 				getConnect.setDoOutput(true);
 				
 				int responseCode = getConnect.getResponseCode();
@@ -86,29 +90,27 @@ public class MappingVideoWithPlayList {
 					
 					JSONArray jsonArrayParent = new JSONArray(response.toString());
 					
-					HandleHeaderRequest headerRequest = new HandleHeaderRequest();
 					// Get info video to list
 					if (pageContinue == YoutobeConstant.FIRST_PAGE) {
-						cToken = headerRequest.getTokenFirst(jsonArrayParent);
+						cToken = getTokenFirst(jsonArrayParent);
 						pageContinue = getPageFirst(jsonArrayParent);
-						playlist.setLisVideoForPlayListChanel(getFirstListVideoInfo(jsonArrayParent, playlist.getLisVideoForPlayListChanel()));
+						getFirstListVideoInfo(jsonArrayParent, playlist.getLisVideoForPlayListChanel());
 					} else {
 						cToken = getToken(jsonArrayParent);
 						pageContinue = getPage(jsonArrayParent);
-						playlist.setLisVideoForPlayListChanel(getListVideoInfo(jsonArrayParent, playlist.getLisVideoForPlayListChanel()));
+						getListVideoInfo(jsonArrayParent, playlist.getLisVideoForPlayListChanel());
 					}
-					
 				}
 				
 			} while (pageContinue != null);
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
+		
 	}
 	
 	
 	public List<InformationVideoYoutobe> getFirstListVideoInfo(JSONArray jsonArrayParent, List<InformationVideoYoutobe> lisInforVideo) {
-		lisInforVideo = new ArrayList<InformationVideoYoutobe>();
 		try {
 			JSONArray listVideo = jsonArrayParent.getJSONObject(1)
 					.getJSONObject("response")
@@ -128,33 +130,32 @@ public class MappingVideoWithPlayList {
 					.getJSONArray("contents");
 			
 			for (int j = 0; j < listVideo.length(); j++) {
-				InformationVideoYoutobe youtobe = new InformationVideoYoutobe();
-				youtobe.setId(j);
-				
-				youtobe.setLinkVideo(YoutobeConstant.LINK_YOUTOBE
-						.concat(listVideo.getJSONObject(j)
-								.getJSONObject("playlistVideoRenderer")
-								.getString("videoId")));
-				
-				youtobe.setChanel("VEVO");
-				
 				try {
-				youtobe.setNameVideo(listVideo.getJSONObject(j)
-						.getJSONObject("playlistVideoRenderer")
-						.getJSONObject("title")
-						.getString("simpleText"));
+					InformationVideoYoutobe youtobe = new InformationVideoYoutobe();
+					youtobe.setId(j);
+					
+					youtobe.setLinkVideo(YoutobeConstant.LINK_YOUTOBE
+							.concat(listVideo.getJSONObject(j)
+									.getJSONObject("playlistVideoRenderer")
+									.getString("videoId")));
+					
+					youtobe.setChanel(chanel);
+					
+					
+					youtobe.setNameVideo(listVideo.getJSONObject(j)
+							.getJSONObject("playlistVideoRenderer")
+							.getJSONObject("title")
+							.getString("simpleText"));
+					
+					youtobe.setTimeVideo(listVideo.getJSONObject(j)
+							.getJSONObject("playlistVideoRenderer")
+							.getJSONObject("lengthText")
+							.getString("simpleText"));
+					
+					lisInforVideo.add(youtobe);
 				} catch (Exception e) {
 					continue;
 				}
-				
-				youtobe.setTimeVideo(listVideo.getJSONObject(j)
-						.getJSONObject("playlistVideoRenderer")
-						.getJSONArray("thumbnailOverlays")
-						.getJSONObject(0)
-						.getJSONObject("thumbnailOverlayTimeStatusRenderer")
-						.getJSONObject("text")
-						.getString("simpleText"));
-				lisInforVideo.add(youtobe);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -164,7 +165,6 @@ public class MappingVideoWithPlayList {
 	
 	
 	public List<InformationVideoYoutobe> getListVideoInfo(JSONArray jsonArrayParent, List<InformationVideoYoutobe> lisInforVideo) {
-		lisInforVideo = new ArrayList<InformationVideoYoutobe>();
 		try {
 			JSONArray listVideo = jsonArrayParent.getJSONObject(1)
 					.getJSONObject("response")
@@ -173,32 +173,32 @@ public class MappingVideoWithPlayList {
 					.getJSONArray("contents");
 			
 			for (int j = 0; j < listVideo.length(); j++) {
-				InformationVideoYoutobe youtobe = new InformationVideoYoutobe();
-				youtobe.setId(j);
-				
-				youtobe.setLinkVideo(YoutobeConstant.LINK_YOUTOBE
-						.concat(listVideo.getJSONObject(j)
+				try {
+					InformationVideoYoutobe youtobe = new InformationVideoYoutobe();
+					youtobe.setId(j);
+					
+					youtobe.setLinkVideo(YoutobeConstant.LINK_YOUTOBE
+							.concat(listVideo.getJSONObject(j)
+									.getJSONObject("playlistVideoRenderer")
+									.getString("videoId")));
+					
+					youtobe.setChanel(chanel);
+						youtobe.setNameVideo(listVideo.getJSONObject(j)
 								.getJSONObject("playlistVideoRenderer")
-								.getString("videoId")));
-				
-				youtobe.setChanel("VEVO");
-				
-				youtobe.setNameVideo(listVideo.getJSONObject(j)
-						.getJSONObject("playlistVideoRenderer")
-						.getJSONObject("title")
-						.getJSONObject("simpleText").toString());
-				
-				youtobe.setTimeVideo(listVideo.getJSONObject(j)
-						.getJSONObject("playlistVideoRenderer")
-						.getJSONArray("thumbnailOverlays")
-						.getJSONObject(0)
-						.getJSONObject("thumbnailOverlayTimeStatusRenderer")
-						.getJSONObject("text")
-						.getJSONObject("simpleText").toString());
-				lisInforVideo.add(youtobe);
+								.getJSONObject("title")
+								.getString("simpleText"));
+	
+					youtobe.setTimeVideo(listVideo.getJSONObject(j)
+							.getJSONObject("playlistVideoRenderer")
+							.getJSONObject("lengthText")
+							.getString("simpleText"));
+					lisInforVideo.add(youtobe);
+				} catch (Exception e) {
+					continue;
+				}
 			}
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 		return lisInforVideo;
 	}
@@ -261,7 +261,7 @@ public class MappingVideoWithPlayList {
 			return jsonArrayParent.getJSONObject(1)
 					.getJSONObject("response")
 					.getJSONObject("continuationContents")
-					.getJSONObject("gridContinuation")
+					.getJSONObject("playlistVideoListContinuation")
 					.getJSONArray("continuations")
 					.getJSONObject(0)
 					.getJSONObject("nextContinuationData")
@@ -276,7 +276,7 @@ public class MappingVideoWithPlayList {
 			return jsonArrayParent.getJSONObject(1)
 					.getJSONObject("response")
 					.getJSONObject("continuationContents")
-					.getJSONObject("gridContinuation")
+					.getJSONObject("playlistVideoListContinuation")
 					.getJSONArray("continuations")
 					.getJSONObject(0)
 					.getJSONObject("nextContinuationData")

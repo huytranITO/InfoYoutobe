@@ -16,11 +16,11 @@ import vn.vmgmedia.infochanel.untils.YoutobeConstant;
 
 public class GetPlaylistChanelYoutobe {
 	
-	public static final String LINK_CHANEL = "";
+	public static String chanel = "";
 	
 	
 	public static void main(String[] args) {
-		String linkChanel = "https://www.youtube.com/channel/UCnSs1c5P6lMMKUME5aZApiw/playlists";
+		String linkChanel = "https://www.youtube.com/user/VEVO";
 		List<InformationPlaylistChanelYoutobe> listInforPlaylist = new ArrayList<InformationPlaylistChanelYoutobe>();
 		
 		GetPlaylistChanelYoutobe youtobe = new GetPlaylistChanelYoutobe();
@@ -33,7 +33,7 @@ public class GetPlaylistChanelYoutobe {
 		System.out.println(listInforPlaylist.size()+"===========");
 	}
 	
-	/**
+	/** Get list playlist chanel
 	 * @param String linkChanel youtobe
 	 * @return void
 	 * */
@@ -82,6 +82,11 @@ public class GetPlaylistChanelYoutobe {
 					HandleHeaderRequest headerRequest = new HandleHeaderRequest();
 					// Get info video to list
 					if (pageContinue == YoutobeConstant.PAGE_FIRST_PLAYLIST) {
+						chanel = jsonArrayParent.getJSONObject(1)
+								.getJSONObject("response")
+								.getJSONObject("header")
+								.getJSONObject("c4TabbedHeaderRenderer")
+								.getString("title");
 						cToken = headerRequest.getTokenFirst(jsonArrayParent);
 						pageContinue =headerRequest. getPageFirstPlaylist(jsonArrayParent);
 						getFirstInfoPlayList(jsonArrayParent, listInforPlaylist);
@@ -90,8 +95,6 @@ public class GetPlaylistChanelYoutobe {
 						pageContinue = headerRequest.getPageContinue(jsonArrayParent);
 						getContinueListPlaylistInfo(jsonArrayParent, listInforPlaylist);
 					}
-					System.out.println(cToken +"1111111111"+ pageContinue);
-				
 				}
 			} catch (Exception e) {
 				System.out.println("Get error");

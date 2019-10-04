@@ -1,9 +1,8 @@
 package vn.vmgmedia.infochanel.domain;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class InformationPlaylistChanelYoutobe implements Serializable{
+public class InformationPlaylistChanelYoutobe{
 	
 	/**
 	 * 

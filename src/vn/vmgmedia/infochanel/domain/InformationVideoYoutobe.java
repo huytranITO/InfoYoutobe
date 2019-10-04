@@ -1,8 +1,6 @@
 package vn.vmgmedia.infochanel.domain;
 
-import java.io.Serializable;
-
-public class InformationVideoYoutobe implements Serializable{
+public class InformationVideoYoutobe{
 	/**
 	 * 
 	 */

@@ -14,27 +14,30 @@ import vn.vmgmedia.infochanel.domain.InformationVideoYoutobe;
 import vn.vmgmedia.infochanel.untils.HandleHeaderRequest;
 import vn.vmgmedia.infochanel.untils.YoutobeConstant;
 
-public class GetInfomationVideChanelYoutobe {
+public class GetInfomationVideoChanelYoutobe {
 	
-
+	private static String chanel = "";
 
 	public static void main(String[] args) {
-		GetInfomationVideChanelYoutobe videChanelYoutobe = new GetInfomationVideChanelYoutobe();
-		String linkChanel = "https://www.youtube.com/channel/UC1R1JWCXHzZbSi2iXWYWwKg/videos";
+		long startTime = System.currentTimeMillis();
+		GetInfomationVideoChanelYoutobe videChanelYoutobe = new GetInfomationVideoChanelYoutobe();
+		String linkChanel = "https://www.youtube.com/user/VEVO";
 		
 		List<InformationVideoYoutobe> listInforVideo = new ArrayList<InformationVideoYoutobe>();
 		
 		videChanelYoutobe.getInforChanel(linkChanel, listInforVideo);
 		
-		for (InformationVideoYoutobe informationYoutobe : listInforVideo) {
+/*		for (InformationVideoYoutobe informationYoutobe : listInforVideo) {
 			System.out.println(informationYoutobe.toString());
-		}
+		}*/
 		
-		System.out.println("========â======" + listInforVideo.size());
-		System.out.println("done!");
+		long endTime   = System.currentTimeMillis();;
+		long totalTime = endTime - startTime;
+		System.out.println(totalTime);
+		System.out.println(listInforVideo.get(listInforVideo.size() - 1).toString());
+		System.out.println(listInforVideo.size()+"--done!");
 		
 	}
-	
 	
 	/**
 	 * @param String linkChanel youtobe
@@ -60,7 +63,7 @@ public class GetInfomationVideChanelYoutobe {
 				HttpsURLConnection getConnect = (HttpsURLConnection) url.openConnection();
 				getConnect.setRequestMethod("GET");
 				getConnect.setRequestProperty("x-youtube-client-name", "1");
-				getConnect.setRequestProperty("x-youtube-client-version", "2.20191002.00.00");
+				getConnect.setRequestProperty("x-youtube-client-version", "2.20191003.00.00");
 				getConnect.setDoOutput(true);
 				
 				int responseCode = getConnect.getResponseCode();
@@ -81,19 +84,19 @@ public class GetInfomationVideChanelYoutobe {
 					bufferedReader.close();
 					
 					JSONArray jsonArrayParent = new JSONArray(response.toString());
+					
 					HandleHeaderRequest headerRequest = new HandleHeaderRequest();
 					// Get info video to list
 					if (pageContinue == YoutobeConstant.PAGE_FIRST) {
-						cToken = headerRequest.getTokenFirst(jsonArrayParent);
-						pageContinue =headerRequest. getPageFirstContinue(jsonArrayParent);
+						cToken = headerRequest.getTokenFirstContinue(jsonArrayParent);
+						pageContinue =headerRequest.getPageFirstContinue(jsonArrayParent);
+						chanel = jsonArrayParent.getJSONObject(1).getJSONObject("response").getJSONObject("microformat").getJSONObject("microformatDataRenderer").getString("title");
 						getFirstListVideoInfo(jsonArrayParent, listInforVideo);
 					} else {
 						cToken = headerRequest.getContinueToken(jsonArrayParent);
 						pageContinue = headerRequest.getPageContinue(jsonArrayParent);
 						getContinueListVideoInfo(jsonArrayParent, listInforVideo);
 					}
-					System.out.println(cToken +"1111111111"+ pageContinue);
-				
 				}
 			} catch (Exception e) {
 				System.out.println("Get error");
@@ -132,7 +135,7 @@ public class GetInfomationVideChanelYoutobe {
 								.getJSONObject("gridVideoRenderer")
 								.getString("videoId")));
 				
-				youtobe.setChanel("VEVO");
+				youtobe.setChanel(chanel);
 				
 				youtobe.setNameVideo(listVideo.getJSONObject(j)
 						.getJSONObject("gridVideoRenderer")
@@ -168,7 +171,7 @@ public class GetInfomationVideChanelYoutobe {
 								.getJSONObject("gridVideoRenderer")
 								.getString("videoId")));
 				
-				youtobe.setChanel("abc");
+				youtobe.setChanel(chanel);
 				
 				youtobe.setNameVideo(listVideo.getJSONObject(j)
 						.getJSONObject("gridVideoRenderer")
